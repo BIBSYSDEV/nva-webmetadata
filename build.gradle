@@ -1,0 +1,77 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'pmd'
+    id 'nebula.lint' version '16.8.0'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+gradleLint.rules = ['unused-dependency']
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    runtimeOnly 'io.quarkus:quarkus-funqy-amazon-lambda'
+    runtimeOnly 'io.quarkus:quarkus-arc'
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.quarkus:quarkus-test-amazon-lambda'
+    testImplementation group: 'io.quarkus', name: 'quarkus-junit5-mockito', version: '1.10.1.Final'
+    implementation group: 'io.quarkus', name: 'quarkus-funqy-server-common', version: '1.10.2.Final'
+    implementation group: 'jakarta.enterprise', name: 'jakarta.enterprise.cdi-api', version: '2.0.2'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.6.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+}
+
+group 'no.unit.nva'
+version '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+
+test {
+    useJUnitPlatform()
+    failFast = true
+    finalizedBy(jacocoTestReport)
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
+
+pmd {
+    ruleSetConfig = rootProject.resources.text.fromFile('config/pmd/ruleset.xml')
+    ruleSets = []
+    ignoreFailures = false
+}
+
+checkstyle {
+    configFile = rootProject.resources.text.fromFile('config/checkstyle/checkstyle.xml').asFile()
+    showViolations = true
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        xml.enabled false
+        html.enabled true
+        html.stylesheet rootProject.resources.text.fromFile('config/checkstyle/checkstyle-simple.xsl')
+    }
+}
