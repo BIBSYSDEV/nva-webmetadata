@@ -1,0 +1,10 @@
+{
+  "id" : "http://localhost:8080/article/hiwire.html",
+  "type" : "Publication",
+  "title" : "Cheating and lying",
+  "@context" : {
+    "@vocab" : "https://unit.no/ontology#",
+    "id" : "@id",
+    "type" : "@type"
+  }
+}

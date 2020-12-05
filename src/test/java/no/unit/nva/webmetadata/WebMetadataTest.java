@@ -1,34 +1,56 @@
 package no.unit.nva.webmetadata;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.quarkus.amazon.lambda.test.LambdaClient;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.mockito.InjectMock;
-import no.unit.nva.webmetadata.http.HttpService;
-import no.unit.nva.webmetadata.http.HttpLocalResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 
 @QuarkusTest
 public class WebMetadataTest {
 
-    public static final String EXAMPLE_URI = "https://example.org/v1/largevalue";
-    public static final String TEST_BODY = "<Hello Bill>";
-    public static final int STATUS_CODE_OK = 200;
+    public static final String HIWIRE_URI_TEMPLATE = "http://localhost:%d/article/hiwire.html";
 
-    @InjectMock
-    HttpService httpService;
+    WireMockServer wireMockServer;
 
     @Test
-    public void testSimpleLambdaSuccess() throws IOException, InterruptedException {
-        when(httpService.get(any(URI.class))).thenReturn(new HttpLocalResponse(STATUS_CODE_OK, TEST_BODY));
-        URI uri = URI.create(EXAMPLE_URI);
+    public void testSimpleLambdaSuccess() {
+        startMock();
+        var testBody = getBody("/highwire_output.json");
+        var uriString = String.format(HIWIRE_URI_TEMPLATE, wireMockServer.port());
+
+        URI uri = URI.create(uriString);
         String out = LambdaClient.invoke(String.class, uri);
-        Assertions.assertEquals(TEST_BODY, out);
+        Assertions.assertEquals(testBody, out);
+        wireMockServer.stop();
+    }
+
+    private void startMock() {
+        wireMockServer = new WireMockServer();
+        wireMockServer.start();
+        var body = getBody("/hiwire_test_data.html");
+        configureFor("localhost", wireMockServer.port());
+        stubFor(get(urlEqualTo("/article/hiwire.html"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "text/html")
+                        .withBody(body)));
+    }
+
+    private String getBody(String filename) {
+        var inputStream = getClass().getResourceAsStream(filename);
+        return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
+                .collect(Collectors.joining("\n"));
     }
 }

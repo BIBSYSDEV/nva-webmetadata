@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'io.quarkus'
+    id 'org.kordamp.gradle.jandex' version '0.8.0'
     id 'jacoco'
     id 'checkstyle'
     id 'pmd'
@@ -8,8 +9,8 @@ plugins {
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    gradlePluginPortal()
 }
 
 gradleLint.rules = ['unused-dependency']
@@ -18,13 +19,27 @@ dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     runtimeOnly 'io.quarkus:quarkus-funqy-amazon-lambda'
     runtimeOnly 'io.quarkus:quarkus-arc'
-    testImplementation 'io.quarkus:quarkus-junit5'
-    testImplementation 'io.quarkus:quarkus-test-amazon-lambda'
-    testImplementation group: 'io.quarkus', name: 'quarkus-junit5-mockito', version: '1.10.1.Final'
+    implementation group: 'org.apache.any23', name: 'apache-any23-core', version: '2.4'
+    implementation group: 'org.apache.any23', name: 'apache-any23-api', version: '2.4'
     implementation group: 'io.quarkus', name: 'quarkus-funqy-server-common', version: '1.10.2.Final'
     implementation group: 'jakarta.enterprise', name: 'jakarta.enterprise.cdi-api', version: '2.0.2'
-    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.6.0'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-repository-sail', version: '3.1.2'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-sail-api', version: '3.1.2'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '3.4.4'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-util', version: '3.4.4'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-rio-api', version: '3.4.4'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-query', version: '3.1.2'
+    implementation group: 'com.github.jsonld-java', name: 'jsonld-java', version: '0.13.1'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-sail-memory', version: '3.1.2'
+    implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-repository-api', version: '3.1.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.3'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.3'
+    testImplementation group: 'io.quarkus', name: 'quarkus-test-common', version: '1.10.2.Final'
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.quarkus:quarkus-test-amazon-lambda'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testImplementation group: 'com.github.tomakehurst', name: 'wiremock-jre8', version: '2.27.2'
+
 }
 
 group 'no.unit.nva'
@@ -73,5 +88,28 @@ tasks.withType(Checkstyle) {
         xml.enabled false
         html.enabled true
         html.stylesheet rootProject.resources.text.fromFile('config/checkstyle/checkstyle-simple.xsl')
+    }
+}
+
+// jacoco configuration
+check.dependsOn jacocoTestCoverageVerification
+jacocoTestCoverageVerification.dependsOn(jacocoTestReport)
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'METHOD'
+                value = 'COVEREDRATIO'
+                minimum = 0.900 //TODO: to be improved after refactor
+            }
+        }
+        rule {
+            limit {
+                counter = 'CLASS'
+                value = 'COVEREDRATIO'
+                minimum = 0.900 //TODO: to be improved after refactor
+            }
+        }
     }
 }
