@@ -1,0 +1,10 @@
+PREFIX any23: <http://vocab.sindice.net/any23#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX unit: <https://unit.no/ontology#>
+
+CONSTRUCT {
+  ?uri a unit:Publication ;
+       unit:title ?title .
+} WHERE {
+  OPTIONAL { ?uri any23:citation_title ?title }
+}
